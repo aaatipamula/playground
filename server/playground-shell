@@ -1,0 +1,17 @@
+#!/bin/sh
+# ForceCommand for the shared "play" SSH account: every connection gets its
+# own throwaway container, capped so one visitor can't starve the others.
+set -eu
+
+tty=
+[ -t 0 ] && tty=-t
+
+exec docker run --rm -i $tty \
+  --init --label playground \
+  --hostname playground \
+  --cpus 0.5 --memory 256m --memory-swap 256m --pids-limit 128 \
+  --cap-drop ALL --security-opt no-new-privileges \
+  --tmpfs /tmp:size=64m \
+  -e TERM="${TERM:-xterm-256color}" \
+  playground \
+  timeout --foreground -k 10s 2h bash -l
